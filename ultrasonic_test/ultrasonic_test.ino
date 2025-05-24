@@ -93,10 +93,9 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
-#define BUZZER_PIN 3 // The Arduino pin connected to the buzzer
+#define POT_PIN A0
 const int trigPin = 12;
 const int echoPin = 13;
-int prev_dist = 0;
 
 //For 7-segment display
 int a=7; 
@@ -113,6 +112,7 @@ float duration, distance;
 void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+  pinMode(POT_PIN, INPUT);
 
   //Setup 7 segment
   int i;
@@ -123,43 +123,26 @@ void setup() {
   Serial.begin(19200);
 }
 
-#define SAMPLE_COUNT 5
-float samples[SAMPLE_COUNT];
-int sample_index = 0;
-
-float getSmoothedDistance(float new_sample) {
-    samples[sample_index] = new_sample;
-    sample_index = (sample_index + 1) % SAMPLE_COUNT;
-
-    float sum = 0;
-    for (int i = 0; i < SAMPLE_COUNT; i++) {
-        sum += samples[i];
-    }
-    return sum / SAMPLE_COUNT;
-}
-
 
 void loop() {
+  //Ultrasonic Sensor Code
+
+  distance = ultrasonic_driver();
+  int note = note_selector(distance);
+  
+  int potVal = analogRead(POT_PIN);
+  Serial.println(String(distance) + " " + String(potVal));
+  delay(250);
+}
+
+int ultrasonic_driver(){
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-
   duration = pulseIn(echoPin, HIGH);
-  distance = (duration*.0343)/2;
-
-  //float new_dist = lerp(prev_dist, distance, 0.5);
-  //prev_dist = distance;
-
-  float raw_dist = (duration * 0.0343) / 2;
-  float smooth_dist = getSmoothedDistance(raw_dist);
-  prev_dist = smooth_dist;
-  // Serial.print("Distance: ");
-  Serial.println(distance);
-  int note = note_selector(raw_dist);
-  tone(BUZZER_PIN, note, 250); //should play for one second
-  delay(250);
+  return (duration*.0343)/2;
 }
 
 int note_selector(float distance){

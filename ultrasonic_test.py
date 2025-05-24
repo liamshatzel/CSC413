@@ -12,7 +12,7 @@ NOTE_A4 = 440.00
 
 def main():
     # Replace '/dev/ttyACM0' with your Arduino port (e.g., 'COM3' on Windows)
-    arduino = serial.Serial('/dev/tty.usbmodem1301', 19200, timeout=1)
+    arduino = serial.Serial('/dev/tty.usbmodem21301', 19200, timeout=1)
     time.sleep(2)  # Wait for Arduino to initialize
     
     try:
@@ -23,7 +23,7 @@ def main():
             if line:
                 distance = float(note)
                 frequency = note_selector(distance)
-                play_note(frequency, 0.2)
+                play_note(frequency, 0.1)
                         #40 * int(note.split('.')[0]), 0.05)
 
     except KeyboardInterrupt:
