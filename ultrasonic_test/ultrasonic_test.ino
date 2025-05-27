@@ -96,6 +96,8 @@
 #define POT_PIN A0
 const int trigPin = 12;
 const int echoPin = 13;
+const int trigPin2 = A1;
+const int echoPin2 = A2;
 
 //For 7-segment display
 int a=7; 
@@ -108,10 +110,15 @@ int g=9;
 int dp=4;
 
 float duration, distance;
+float duration2, distance2;
+
 
 void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+  pinMode(trigPin2, OUTPUT);
+  pinMode(echoPin2, INPUT);
+
   pinMode(POT_PIN, INPUT);
 
   //Setup 7 segment
@@ -127,22 +134,32 @@ void setup() {
 void loop() {
   //Ultrasonic Sensor Code
 
-  distance = ultrasonic_driver();
+  distance = ultrasonic_driver(trigPin, echoPin, 1);
+  distance2 = ultrasonic_driver(trigPin2, echoPin2, 2);
+
   int note = note_selector(distance);
   
   int potVal = analogRead(POT_PIN);
-  Serial.println(String(distance) + " " + String(potVal));
+  Serial.println(String(distance) + " " + String(potVal) + " " + String(distance2));
+  //Serial.println("Distance 2" + String(distance2));
+
   delay(250);
 }
 
-int ultrasonic_driver(){
+int ultrasonic_driver(int trigPin, int echoPin, int durationSelect){
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  return (duration*.0343)/2;
+  if (durationSelect == 1){
+      duration = pulseIn(echoPin, HIGH);
+      return (duration*.0343)/2;
+
+  }else{
+      duration2 = pulseIn(echoPin, HIGH);
+      return (duration2*.0343)/2;
+  }
 }
 
 int note_selector(float distance){

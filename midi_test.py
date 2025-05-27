@@ -42,7 +42,7 @@ def note_selector(distance):
 def read_serial():
     global current_freq
     global pitch_shift
-    arduino = serial.Serial('/dev/tty.usbmodem21301', 19200, timeout=1)
+    arduino = serial.Serial('/dev/tty.usbmodem1301', 19200, timeout=1)
     time.sleep(2)
     try:
         while True:
@@ -50,18 +50,27 @@ def read_serial():
             print(line)
             dist = line.split(" ")[0]
             pot = line.split(" ")[1]
+            dist2 = line.split(" ")[2]
 
-            print(dist + " " + pot)
+            print(dist + " " + pot + " " + dist2)
             try:
                 distance = float(dist)
                 current_freq = note_selector(distance)
                 pot = float(pot)
+                distance2 = float(dist2)
                 if pot >= 0 and pot <= 1023:
                     pitch_shift = (pot - 512) / 512 * 12  # Map to -12 to +12 semitones
                 else:
                     pitch_shift = 0.0
 
                 shifted_freq = current_freq * (2 ** ((pitch_shift * 2)/ 12))  # shift in semitones
+    
+                #print(dist2)
+                #vel = max(0, min(127, 100 * int(int(distance2) / 171)))
+                vel = int(linear_scale(int(distance2), 0, 30, out_min=30, out_max=100))
+                #int(scaled_sigmoid(distance2))
+                print("Velocity: " + str(vel))
+                #int(100 * (1/(1 + np.exp((distance2))))) # Sigmoid function for velocity
 
                 # Choose the IAC port (e.g., "IAC Driver Bus 1")
                 outport = mido.open_output("IAC Driver Python MIDI")
@@ -71,12 +80,14 @@ def read_serial():
                 if shifted_freq > 0:
                     print("Shifted Frequency: ", shifted_freq)
                     # Send a note to GarageBand
-                    outport.send(Message('note_on', note=freq_to_midi(shifted_freq), velocity=100))  
+                    outport.send(Message('note_on', note=freq_to_midi(shifted_freq), velocity=vel))
+                                         #int(velocity)))  
                     time.sleep(0.25)
                     outport.send(Message('note_off', note=freq_to_midi(shifted_freq), velocity=0))
-                outport.send(Message('note_off', note=freq_to_midi(shifted_freq), velocity=0))
+                #outport.send(Message('note_off', note=freq_to_midi(shifted_freq), velocity=0))
 
-            except ValueError:
+            except ValueError as e:
+                print("Something bad happened", e)
                 continue
     finally:
         arduino.close()
@@ -91,10 +102,19 @@ def freq_to_midi(freq):
         # TODO: Figure out why freq isnt positive
         return int(round(69 + 12 * math.log2(freq / 440.0)))
 
+def scaled_sigmoid(x, low=30, high=100):
+    sig = 1 / (1 + np.exp(-x))
+    return low + sig * (high - low)
+
 def main():
     # Print available MIDI ports
     print(mido.get_output_names())
     read_serial()
+
+def linear_scale(x, xmin, xmax, out_min=30, out_max=100):
+    # Clip to avoid extrapolation (optional)
+    x = max(xmin, min(xmax, x))
+    return out_min + ((x - xmin) / (xmax - xmin)) * (out_max - out_min)
 
 if __name__ == '__main__':
     main()
