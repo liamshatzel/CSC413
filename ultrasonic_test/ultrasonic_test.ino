@@ -93,7 +93,7 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
-#define POT_PIN A0
+const int ldrPin = A0;
 const int trigPin = 12;
 const int echoPin = 13;
 const int trigPin2 = A1;
@@ -118,8 +118,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(trigPin2, OUTPUT);
   pinMode(echoPin2, INPUT);
-
-  pinMode(POT_PIN, INPUT);
+  pinMode(ldrPin, INPUT);
 
   //Setup 7 segment
   int i;
@@ -139,8 +138,9 @@ void loop() {
 
   int note = note_selector(distance);
   
-  int potVal = analogRead(POT_PIN);
-  Serial.println(String(distance) + " " + String(potVal) + " " + String(distance2));
+  //int potVal = analogRead(POT_PIN);
+  int ldrVal = analogRead(ldrPin);
+  Serial.println(String(distance) + " " + String(distance2) + " " + String(ldrVal));
   //Serial.println("Distance 2" + String(distance2));
 
   delay(250);
