@@ -138,10 +138,8 @@ void loop() {
 
   int note = note_selector(distance);
   
-  //int potVal = analogRead(POT_PIN);
   int ldrVal = analogRead(ldrPin);
   Serial.println(String(distance) + " " + String(distance2) + " " + String(ldrVal));
-  //Serial.println("Distance 2" + String(distance2));
 
   delay(250);
 }
