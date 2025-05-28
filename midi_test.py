@@ -69,12 +69,12 @@ def read_serial():
                 ldr = float(ldr)
 
                 if ldr <= 400:
-                    #current_state = True
+                    current_state = True
                 else:
-                    switch_track()
-                    #current_state = False
+                    current_state = False
 
 
+                switch_track()
                 shifted_freq = current_freq 
     
                 vel = int(linear_scale(int(distance2), 0, 30, out_min=30, out_max=100))
@@ -122,33 +122,29 @@ def linear_scale(x, xmin, xmax, out_min=30, out_max=100):
 
 def switch_track():
     global prev_state, current_state, change_state
-    
-    # Up = True
-    # Down = False
-    #if current_state != prev_state:
-        #if not change_state: 
-        #change_state = True
-        #else:
-        #change_state = False
-    if current_state:
-        key_code = '125'  # Down Arrow
-        direction = "down"
-        current_state = False 
-    else:
-        key_code = '126'  # Up Arrow
-        direction = "up"
-        current_state = True
 
-    # run AppleScript
-    script = f'''
-    tell application "System Events"
-        tell process "GarageBand"
-            key code {key_code}
+    if current_state != prev_state:
+        #if not change_state: 
+        change_state = True
+        #else:
+        change_state = False
+        if current_state:
+            key_code = '125'  # Down Arrow
+            direction = "down"
+        else:
+            key_code = '126'  # Up Arrow
+            direction = "up"
+
+        # run AppleScript
+        script = f'''
+        tell application "System Events"
+            tell process "GarageBand"
+                key code {key_code}
+            end tell
         end tell
-    end tell
-    '''
-    subprocess.run(['osascript', '-e', script])
-    print(f"Switched track {direction}")
+        '''
+        subprocess.run(['osascript', '-e', script])
+        print(f"Switched track {direction}")
 
     prev_state = current_state
 
