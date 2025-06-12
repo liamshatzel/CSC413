@@ -1,2 +1,4 @@
 venv/
 extras/
+.DS_Store
+a1
