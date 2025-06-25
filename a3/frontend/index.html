@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Studio - ChatGPT to Arduino</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 Smart Studio</h1>
+            <p>Chat with AI to control your Arduino components</p>
+            <div class="status-indicator">
+                <span id="connectionStatus" class="status-dot"></span>
+                <span id="connectionText">Checking connection...</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        <div class="message-content">
+                            <p>👋 Welcome to Smart Studio! Ask me to control your Arduino components. Try saying:</p>
+                            <ul>
+                                <li>"Turn on the LED"</li>
+                                <li>"Move the servo to 90 degrees"</li>
+                                <li>"Play a beep sound"</li>
+                                <li>"Turn off all components"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <form id="chatForm" class="chat-form">
+                        <input type="text" id="messageInput" placeholder="Ask me to control your Arduino..."
+                            autocomplete="off" required>
+                        <button type="submit" id="sendButton">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <h3>Manual Controls</h3>
+                <div class="control-grid">
+                    <div class="control-group">
+                        <h4>LED Control</h4>
+                        <div class="button-group">
+                            <button class="control-btn" onclick="sendCommand('LED_ON')">Turn On</button>
+                            <button class="control-btn" onclick="sendCommand('LED_OFF')">Turn Off</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h4>Servo Control</h4>
+                        <div class="servo-control">
+                            <input type="range" id="servoSlider" min="0" max="180" value="90" class="servo-slider">
+                            <span id="servoValue">90°</span>
+                            <button class="control-btn" onclick="sendServoCommand()">Move Servo</button>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h4>Buzzer Control</h4>
+                        <div class="button-group">
+                            <button class="control-btn" onclick="sendCommand('BUZZER_ON')">Beep On</button>
+                            <button class="control-btn" onclick="sendCommand('BUZZER_OFF')">Beep Off</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="command-log">
+                    <h4>Recent Commands</h4>
+                    <div id="commandLog" class="log-container"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
