@@ -5,23 +5,31 @@
 echo "Starting Smart Studio..."
 echo "================================"
 
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    echo "Node.js is not installed. Please install Node.js first."
+# Check if Python is installed
+if ! command -v python3 &> /dev/null; then
+    echo "Python 3 is not installed. Please install Python 3 first."
+    exit 1
+fi
+
+# Check if pip is installed
+if ! command -v pip3 &> /dev/null; then
+    echo "pip3 is not installed. Please install pip3 first."
     exit 1
 fi
 
 # Check if backend dependencies are installed
-if [ ! -d "backend/node_modules" ]; then
+if [ ! -f "backend/venv/bin/activate" ]; then
     echo "Installing backend dependencies..."
     cd backend
-    npm install
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
     cd ..
 fi
 
 # Check if .env file exists
 if [ ! -f "backend/.env" ]; then
-    echo "No .env file found. Copy env.example to .env and set it up."
+    echo "No .env file found. Copy env.example to .env and configure your settings."
     echo "   cp backend/env.example backend/.env"
     echo "   Then edit backend/.env with your OpenAI API key and Arduino port."
     exit 1
@@ -30,7 +38,8 @@ fi
 # Start backend server
 echo "Starting backend server..."
 cd backend
-npm start &
+source venv/bin/activate
+python app.py &
 BACKEND_PID=$!
 cd ..
 

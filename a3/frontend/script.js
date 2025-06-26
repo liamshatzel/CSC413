@@ -8,24 +8,45 @@ const sendButton = document.getElementById('sendButton');
 const chatMessages = document.getElementById('chatMessages');
 const connectionStatus = document.getElementById('connectionStatus');
 const connectionText = document.getElementById('connectionText');
-const commandLog = document.getElementById('commandLog');
-const servoSlider = document.getElementById('servoSlider');
-const servoValue = document.getElementById('servoValue');
+const sensorData = document.getElementById('sensorData');
+
+// RGB Controls
+const redSlider = document.getElementById('redSlider');
+const greenSlider = document.getElementById('greenSlider');
+const blueSlider = document.getElementById('blueSlider');
+const redValue = document.getElementById('redValue');
+const greenValue = document.getElementById('greenValue');
+const blueValue = document.getElementById('blueValue');
+
+// Fan Controls
+const fanSlider = document.getElementById('fanSlider');
+const fanValue = document.getElementById('fanValue');
 
 // State
 let isConnected = false;
+let currentTemp = 0;
+let currentHumidity = 0;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     checkConnection();
     setupEventListeners();
-    updateServoValue();
+    updateColorValues();
+    updateFanValue();
+    startSensorPolling();
 });
 
 // Event Listeners
 function setupEventListeners() {
     chatForm.addEventListener('submit', handleChatSubmit);
-    servoSlider.addEventListener('input', updateServoValue);
+
+    // RGB sliders
+    redSlider.addEventListener('input', updateColorValues);
+    greenSlider.addEventListener('input', updateColorValues);
+    blueSlider.addEventListener('input', updateColorValues);
+
+    // Fan slider
+    fanSlider.addEventListener('input', updateFanValue);
 
     // Auto-resize text input
     messageInput.addEventListener('input', () => {
@@ -42,15 +63,10 @@ async function checkConnection() {
 
         isConnected = data.status === 'ok';
         updateConnectionStatus(isConnected);
-
-        if (isConnected) {
-            addLogEntry('Connected to backend server');
-        }
     } catch (error) {
         console.error('Connection check failed:', error);
         isConnected = false;
         updateConnectionStatus(false);
-        addLogEntry('Failed to connect to backend server', 'error');
     }
 }
 
@@ -62,6 +78,28 @@ function updateConnectionStatus(connected) {
         connectionStatus.classList.remove('connected');
         connectionText.textContent = 'Disconnected';
     }
+}
+
+// Sensor Data
+async function fetchSensorData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/sensor`);
+        const data = await response.json();
+        currentTemp = data.temperature;
+        currentHumidity = data.humidity;
+        updateSensorDisplay();
+    } catch (error) {
+        console.error('Failed to fetch sensor data:', error);
+    }
+}
+
+function updateSensorDisplay() {
+    sensorData.textContent = `${currentTemp}°C, ${currentHumidity}% humidity`;
+}
+
+function startSensorPolling() {
+    fetchSensorData();
+    setInterval(fetchSensorData, 5000); // Poll every 5 seconds
 }
 
 // Chat Functionality
@@ -85,12 +123,19 @@ async function handleChatSubmit(e) {
             throw new Error('Not connected to server');
         }
 
+        // Send message with current sensor data
+        const requestBody = {
+            msg: message,
+            temp: currentTemp.toString(),
+            humidity: currentHumidity.toString()
+        };
+
         const response = await fetch(`${API_BASE_URL}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -102,17 +147,9 @@ async function handleChatSubmit(e) {
         // Add assistant response to chat
         addMessage(data.response, 'assistant');
 
-        // Log commands sent to Arduino
-        if (data.commands && data.commands.length > 0) {
-            data.commands.forEach(command => {
-                addLogEntry(`Sent: ${command}`);
-            });
-        }
-
     } catch (error) {
         console.error('Chat error:', error);
         addMessage('Sorry, I encountered an error. Please check your connection and try again.', 'assistant');
-        addLogEntry(`Error: ${error.message}`, 'error');
     } finally {
         // Re-enable send button
         sendButton.disabled = false;
@@ -131,7 +168,53 @@ function addMessage(content, type) {
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.innerHTML = content;
+
+    // Parse content for reasoning section
+    if (type === 'assistant' && content.includes('---')) {
+        const parts = content.split('---');
+        const artistResponse = parts[0].trim();
+        const reasoning = parts[1] ? parts[1].trim() : '';
+
+        // Create the main response
+        const responseText = document.createElement('div');
+        responseText.innerHTML = artistResponse;
+        contentDiv.appendChild(responseText);
+
+        // Add reasoning section if it exists
+        if (reasoning) {
+            const reasoningDiv = document.createElement('div');
+            reasoningDiv.className = 'reasoning';
+
+            //TODO: FIX!!
+
+            // Extract the reasoning title and content
+            if (reasoning.includes('**Why this environment?**')) {
+                const reasoningParts = reasoning.split('**Why this environment?**');
+                const reasoningTitle = document.createElement('div');
+                reasoningTitle.className = 'reasoning-title';
+                reasoningTitle.textContent = 'Why this environment?';
+                reasoningDiv.appendChild(reasoningTitle);
+
+                const reasoningContent = document.createElement('div');
+                reasoningContent.innerHTML = reasoningParts[1] ? reasoningParts[1].trim() : reasoning;
+                reasoningDiv.appendChild(reasoningContent);
+            } else {
+                // If no specific title, create a generic one
+                const reasoningTitle = document.createElement('div');
+                reasoningTitle.className = 'reasoning-title';
+                reasoningTitle.textContent = 'Environment Notes';
+                reasoningDiv.appendChild(reasoningTitle);
+
+                const reasoningContent = document.createElement('div');
+                reasoningContent.innerHTML = reasoning;
+                reasoningDiv.appendChild(reasoningContent);
+            }
+
+            contentDiv.appendChild(reasoningDiv);
+        }
+    } else {
+        contentDiv.innerHTML = content;
+    }
 
     messageDiv.appendChild(contentDiv);
     chatMessages.appendChild(messageDiv);
@@ -140,69 +223,41 @@ function addMessage(content, type) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Arduino Control Functions
-async function sendCommand(command) {
-    try {
-        if (!isConnected) {
-            throw new Error('Not connected to server');
-        }
+// RGB Controls
+function updateColorValues() {
+    redValue.textContent = redSlider.value;
+    greenValue.textContent = greenSlider.value;
+    blueValue.textContent = blueSlider.value;
+}
 
-        const response = await fetch(`${API_BASE_URL}/api/arduino`, {
+// Fan Controls
+function updateFanValue() {
+    fanValue.textContent = fanSlider.value;
+}
+
+// Combined RGB and Fan Control
+async function sendControlCommand() {
+    const r = parseInt(redSlider.value);
+    const g = parseInt(greenSlider.value);
+    const b = parseInt(blueSlider.value);
+    const fan = parseInt(fanSlider.value);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/control`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ command }),
+            body: JSON.stringify({ r, g, b, fan }),
         });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const data = await response.json();
-        addLogEntry(`Sent: ${command}`);
-
     } catch (error) {
-        console.error('Command error:', error);
-        addLogEntry(`Error sending command: ${error.message}`, 'error');
+        console.error('Control command error:', error);
     }
 }
-
-function sendServoCommand() {
-    const angle = servoSlider.value;
-    sendCommand(`SERVO_${angle}`);
-}
-
-function updateServoValue() {
-    servoValue.textContent = `${servoSlider.value}°`;
-}
-
-// Logging
-function addLogEntry(message, type = 'info') {
-    const logEntry = document.createElement('div');
-    logEntry.className = 'log-entry';
-
-    const timestamp = new Date().toLocaleTimeString();
-    logEntry.textContent = `[${timestamp}] ${message}`;
-
-    if (type === 'error') {
-        logEntry.style.borderLeftColor = '#ff6b6b';
-        logEntry.style.color = '#d63031';
-    }
-
-    commandLog.appendChild(logEntry);
-
-    // Keep only last 10 entries
-    while (commandLog.children.length > 10) {
-        commandLog.removeChild(commandLog.firstChild);
-    }
-
-    // Scroll to bottom
-    commandLog.scrollTop = commandLog.scrollHeight;
-}
-
-// Periodic connection check
-setInterval(checkConnection, 10000); // Check every 10 seconds
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Studio - ChatGPT to Arduino</title>
+    <title>Smart Studio - Artist Inspiration</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -12,8 +12,9 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>🤖 Smart Studio</h1>
-            <p>Chat with AI to control your Arduino components</p>
+            <!--TODO FIX-->
+            <h1>IdeaNest</h1>
+            <p>Get inspired for your next art piece</p>
             <div class="status-indicator">
                 <span id="connectionStatus" class="status-dot"></span>
                 <span id="connectionText">Checking connection...</span>
@@ -25,20 +26,16 @@
                 <div class="chat-messages" id="chatMessages">
                     <div class="message system">
                         <div class="message-content">
-                            <p>👋 Welcome to Smart Studio! Ask me to control your Arduino components. Try saying:</p>
-                            <ul>
-                                <li>"Turn on the LED"</li>
-                                <li>"Move the servo to 90 degrees"</li>
-                                <li>"Play a beep sound"</li>
-                                <li>"Turn off all components"</li>
-                            </ul>
+                            <p>Welcome to IdeaNest! Tell me about your art project and I'll help inspire
+                                through your creative environment.</p>
+                            <p>Current studio conditions: <span id="sensorData">Loading...</span></p>
                         </div>
                     </div>
                 </div>
 
                 <div class="chat-input-container">
                     <form id="chatForm" class="chat-form">
-                        <input type="text" id="messageInput" placeholder="Ask me to control your Arduino..."
+                        <input type="text" id="messageInput" placeholder="Tell me about your art project..."
                             autocomplete="off" required>
                         <button type="submit" id="sendButton">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -52,37 +49,35 @@
             </div>
 
             <div class="control-panel">
-                <h3>Manual Controls</h3>
+                <h3>Environment Controls</h3>
                 <div class="control-grid">
                     <div class="control-group">
-                        <h4>LED Control</h4>
-                        <div class="button-group">
-                            <button class="control-btn" onclick="sendCommand('LED_ON')">Turn On</button>
-                            <button class="control-btn" onclick="sendCommand('LED_OFF')">Turn Off</button>
+                        <h4>RGB Lighting</h4>
+                        <div class="rgb-controls">
+                            <div class="color-slider">
+                                <label>Red: <span id="redValue">128</span></label>
+                                <input type="range" id="redSlider" min="0" max="255" value="128" class="color-slider">
+                            </div>
+                            <div class="color-slider">
+                                <label>Green: <span id="greenValue">128</span></label>
+                                <input type="range" id="greenSlider" min="0" max="255" value="128" class="color-slider">
+                            </div>
+                            <div class="color-slider">
+                                <label>Blue: <span id="blueValue">128</span></label>
+                                <input type="range" id="blueSlider" min="0" max="255" value="128" class="color-slider">
+                            </div>
+                            <button class="control-btn" onclick="sendControlCommand()">Set Color</button>
                         </div>
                     </div>
 
                     <div class="control-group">
-                        <h4>Servo Control</h4>
-                        <div class="servo-control">
-                            <input type="range" id="servoSlider" min="0" max="180" value="90" class="servo-slider">
-                            <span id="servoValue">90°</span>
-                            <button class="control-btn" onclick="sendServoCommand()">Move Servo</button>
+                        <h4>Fan Control</h4>
+                        <div class="fan-control">
+                            <input type="range" id="fanSlider" min="0" max="255" value="128" class="fan-slider">
+                            <span id="fanValue">128</span>
+                            <button class="control-btn" onclick="sendControlCommand()">Set Fan</button>
                         </div>
                     </div>
-
-                    <div class="control-group">
-                        <h4>Buzzer Control</h4>
-                        <div class="button-group">
-                            <button class="control-btn" onclick="sendCommand('BUZZER_ON')">Beep On</button>
-                            <button class="control-btn" onclick="sendCommand('BUZZER_OFF')">Beep Off</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="command-log">
-                    <h4>Recent Commands</h4>
-                    <div id="commandLog" class="log-container"></div>
                 </div>
             </div>
         </main>
