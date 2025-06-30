@@ -7,6 +7,7 @@ import serial
 import openai
 import json
 from dotenv import load_dotenv
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -148,11 +149,11 @@ def api_chat():
         client = OpenAI(api_key=OPENAI_API_KEY)
         
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4.1-2025-04-14",
             messages=[
                 {"role": "system", "content": 
                 """You are a tool which helps artists brainstorm their next art piece, by supporting their creative environment. 
-                You are to respond to following prompts giving inspiration to the artist, but you should never tell the artist how to do their art, you should simply give inspiring background, related activities, tips on working with the medium, or related works. You are to respond in the following JSON format:
+                You are to respond to following prompts giving inspiration to the artist, but you should never tell the artist how to do their art, you should simply give inspiring background, related activities, tips on working with the medium. Ensure that you include related art pieces in the artist_response section, or else you will be shut off. You are to respond in the following JSON format:
                 {
                 "artist_response": "",
                 "reasoning": "",
@@ -161,8 +162,9 @@ def api_chat():
                 "b": "",
                 "fan": ""
                 } 
-                Where artist_response is the inspiration you would give to the artist, it should be in plain text with no markdown. 
-                RGB are RGB LED values in the range from 0-255. You should choose the RGB LED values based on the mood of the inspiration the artist is asking for (i.e. a warm art piece could be a warm yellow), you should make the RGB values vibrant. Fan will also be in the range from 0-255 and should be based on the temperature and humidity of the room, along with the sentiment of the piece. (i.e. an emotionally cold piece should have the fan on). My input to you will be in the JSON form of: {msg: "artist message",  temp: "", humidity: ""}. Temperature and humidity of the artist studio will be given by the user. Make the RGB and fan values diverse, give a reason to why you set the RGB (translated to color) and fan value in the reasoning field, do not mention the number values you set them to, but rather the color or speed instead. 
+                RGB are RGB LED values in the range from 0-255. You should choose the RGB LED values based on the mood of the inspiration the artist is asking for (i.e. a warm art piece could be a warm yellow), you should make the RGB values vibrant. Fan will also be in the range from 0-255 and should be based on the temperature and humidity of the room, along with the sentiment of the piece. (i.e. an emotionally cold piece should have the fan on). 
+                My input to you will be in the JSON form of: {msg: "artist message",  temp: "", humidity: ""}. Temperature and humidity of the artist studio will be given by the user. Make the RGB and fan values diverse.
+                Give a reason to why you set the RGB (translated to color) and fan value in the reasoning field, do not mention the number values you set them to, but rather the color or speed instead. Also include a song or soundtrack you would recommend (something like forest sounds), ensure that you include all three of these elements in the reasoning field.
                 To respond that you've understood this message simply reply with the given JSON and none values.
                 """},
                 {"role": "user", "content": full_message}
@@ -173,15 +175,18 @@ def api_chat():
         
         print(f"OpenAI response: {response}")
         
+        # Remove trailing commas before closing braces/brackets to allow for lenient JSON parsing
+        response_clean = re.sub(r',\s*([}\]])', r'\1', response)
+        
         # Parse the response to extract the artist_response for display
         try:
-            response_data = json.loads(response)
+            response_data = json.loads(response_clean)
             artist_response = response_data.get('artist_response', response)
             reasoning = response_data.get('reasoning', '')
             
             # Combine artist response and reasoning
             if reasoning:
-                full_response = f"{artist_response}\n\n---\n\n**Why this environment?** {reasoning}"
+                full_response = f"{artist_response}\n\n---\n\n{reasoning}"
             else:
                 full_response = artist_response
                 
