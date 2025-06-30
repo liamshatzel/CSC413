@@ -185,30 +185,16 @@ function addMessage(content, type) {
             const reasoningDiv = document.createElement('div');
             reasoningDiv.className = 'reasoning';
 
-            //TODO: FIX!!
+            // Create a generic title
+            const reasoningTitle = document.createElement('div');
+            reasoningTitle.className = 'reasoning-title';
+            reasoningTitle.textContent = 'Environment Notes';
+            reasoningDiv.appendChild(reasoningTitle);
 
-            // Extract the reasoning title and content
-            if (reasoning.includes('**Why this environment?**')) {
-                const reasoningParts = reasoning.split('**Why this environment?**');
-                const reasoningTitle = document.createElement('div');
-                reasoningTitle.className = 'reasoning-title';
-                reasoningTitle.textContent = 'Why this environment?';
-                reasoningDiv.appendChild(reasoningTitle);
-
-                const reasoningContent = document.createElement('div');
-                reasoningContent.innerHTML = reasoningParts[1] ? reasoningParts[1].trim() : reasoning;
-                reasoningDiv.appendChild(reasoningContent);
-            } else {
-                // If no specific title, create a generic one
-                const reasoningTitle = document.createElement('div');
-                reasoningTitle.className = 'reasoning-title';
-                reasoningTitle.textContent = 'Environment Notes';
-                reasoningDiv.appendChild(reasoningTitle);
-
-                const reasoningContent = document.createElement('div');
-                reasoningContent.innerHTML = reasoning;
-                reasoningDiv.appendChild(reasoningContent);
-            }
+            // Add the full reasoning content
+            const reasoningContent = document.createElement('div');
+            reasoningContent.innerHTML = reasoning;
+            reasoningDiv.appendChild(reasoningContent);
 
             contentDiv.appendChild(reasoningDiv);
         }
